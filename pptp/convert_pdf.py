@@ -1,8 +1,8 @@
 import fitz,os,re,json,tabula
 
 ### 需要用户手动定义的部分
-pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/example2_文字可编辑版/基于深度学习的条件式视觉内容生成研究及应用_张江宁.pdf"
-output_folder="whj_code1/github_code2/parse_paper_to_parts/example2_文字可编辑版/extract_result"  #下次更新检验这个文件夹是否存在，现在请存在
+pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/example1_文字可编辑版/基于深度学习的海关虚假贸易案件罚款金额预测_胡鑫.pdf"
+output_folder="whj_code1/github_code2/parse_paper_to_parts/example1_文字可编辑版/extract_result"  #下次更新检验这个文件夹是否存在，现在请存在
 
 
 ### 执行代码部分
@@ -14,9 +14,10 @@ def process_text(text:str,body_titles:list=[],position:str="正文"):
     paragraph_segmentations=".。:："
         
     for i in range(len(lines)):
-        if any([lines[i].endswith(paragraph_segmentation+" ") for paragraph_segmentation in paragraph_segmentations]):
+        if any([lines[i].endswith(paragraph_segmentation+" ") or lines[i].endswith(paragraph_segmentation) \
+                for paragraph_segmentation in paragraph_segmentations]):
             lines[i]+="\n"
-        if any([body_title in lines[i] for body_title in body_titles]):
+        if any([lines[i].startswith(body_title) for body_title in body_titles]):
             lines[i]="\n\n"+lines[i]+"\n"
         if lines[i]=="!":
             lines[i]=""
@@ -44,7 +45,7 @@ image_output_folder=os.path.join(output_folder,filename+"_pic")
 if not os.path.exists(image_output_folder):
     os.makedirs(image_output_folder)
 
-bio_status=0  #0前言，1摘要，2目录，3正文，4参考文献，5附录
+bio_status=0  #0前言，1摘要，2目录，2.5不需要的目录，3正文，4参考文献，5附录
 body_titles=[]
 
 zancun_id=set()
@@ -54,6 +55,8 @@ for page_index in range(len(doc)):
     page=doc[page_index]
 
     texts=page.get_text()
+    if texts.strip()=="":
+        continue
     
     if bio_status==0 and not re.search(r"摘\s*要",texts) is None:
         output_text_file.write("摘要\n"+process_text(texts[re.search(r"摘\s*要",texts).span()[1]:]))
@@ -68,11 +71,13 @@ for page_index in range(len(doc)):
             items=texts.split("\n")
             for item_index in range(len(items)):
                 item=items[item_index].strip()
-                if item.endswith("1") and not item.startswith("目录"):
+                if "绪论" in item:
                     break
             for item in items[item_index:]:
-                body_title=item[:item.find("..")].strip()
-                if len(body_title)>0:
+                for p in re.finditer(r'\.\s*\.',item):
+                    break
+                body_title=item[:p.span()[0]].strip()
+                if len(body_title)>0 and bool(re.search(r'[\u4e00-\u9fff]+',body_title)):
                     body_titles.append(body_title)
 
         else:
@@ -80,6 +85,8 @@ for page_index in range(len(doc)):
     elif bio_status==2:
         if not re.search(body_titles[0],texts) is None:
             bio_status=3
+        elif (re.search(r"插\s*图",texts) is not None) or (re.search(r"表\s*格",texts) is not None):
+            bio_status=2.5
         else:
             items=texts.split("\n")
             for item_index in range(len(items)):
@@ -87,17 +94,21 @@ for page_index in range(len(doc)):
                 if item.endswith("1") and not item.startswith("目录"):
                     break
             for item in items[item_index:]:
-                body_title=item[:item.find("..")].strip()
-                if len(body_title)>0:
+                for p in re.finditer(r'\.\s*\.',item):
+                    break
+                body_title=item[:p.span()[0]].strip()
+                if len(body_title)>0 and bool(re.search(r'[\u4e00-\u9fff]+',body_title)):
                     body_titles.append(body_title)
+    elif bio_status==2.5:
+        if not re.search(body_titles[0],texts) is None:
+            bio_status=3
     
     if bio_status==3:
         if "参考文献 " in texts.split("\n"):
             bio_status=4
             output_text_file.write("\n\n")
         else:
-            write_text_total=process_text("\n".join(texts.split("\n")[3:-1]),body_titles)
-
+            write_text_total=texts
             #提取图片
             image_list = page.get_images(full=True)
 
@@ -111,7 +122,7 @@ for page_index in range(len(doc)):
                     if int(line[3])==int(y1):  #因为有误差所以不能精确相等
                         break
                 
-                line=texts2[line_index+2]
+                line=texts2[line_index+2]  #TODO: 这个位置我怎么决定是1还是2？
                 description=line[4].strip()
                 try:
                     line_id=extract_id(description)
@@ -148,7 +159,11 @@ for page_index in range(len(doc)):
                 picture_path=os.path.join(image_output_folder,line_id+".png")
                 if if_zancunlujing:
                     zancunlujing_list.append(picture_path)
-                pix.save(picture_path,output="png") # save the image as png
+                try:
+                    pix.save(picture_path,output="png") # save the image as png
+                except RuntimeError as e:  #RuntimeError: pixmap must be grayscale or rgb to write as png
+                    newpix = fitz.Pixmap(fitz.csRGB,pix)
+                    newpix.save(picture_path,output="png")
                 pix = None
             
             #提取表格
@@ -169,7 +184,8 @@ for page_index in range(len(doc)):
 
             
 
-            output_text_file.write(write_text_total)
+            
+            output_text_file.write(process_text(write_text_total,body_titles))
 
     if bio_status==4:
         output_text_file.write(process_text("\n".join(texts.split("\n")[3:-1]),body_titles,position="参考文献"))
