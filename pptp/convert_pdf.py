@@ -1,5 +1,4 @@
-import fitz,os,re,json
-import tabula
+import fitz,os,re,json,pdfplumber
 
 ### 需要用户手动定义的部分
 pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/example1_文字可编辑版/基于深度学习的海关虚假贸易案件罚款金额预测_胡鑫.pdf"
@@ -121,9 +120,9 @@ for page_index in range(len(doc)):
             pix = None
         
         #提取表格
-        tables=tabula.read_pdf(pdf_file_path,pages=page_index,multiple_tables = True)
-        if len(tables)>0:
-            print(tables)
-            break
+        pdf = pdfplumber.open(pdf_file_path)
+        page = pdf.pages[page_index]
+        if not page.extract_table() is None:
+            pass
 
 json.dump(output_image,open(os.path.join(output_folder,filename+"_pic.json"),"w"),ensure_ascii=False)
