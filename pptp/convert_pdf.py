@@ -1,8 +1,8 @@
 import fitz,os,re,json,tabula
 
 ### 需要用户手动定义的部分
-pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/example1_文字可编辑版/基于深度学习的海关虚假贸易案件罚款金额预测_胡鑫.pdf"
-output_folder="whj_code1/github_code2/parse_paper_to_parts/example1_文字可编辑版/extract_result"  #下次更新检验这个文件夹是否存在，现在请存在
+pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/example3/结合可视化与数据挖掘的数据分析方法探究_马昱欣.pdf"
+output_folder="whj_code1/github_code2/parse_paper_to_parts/example3/extract_result"  #下次更新检验这个文件夹是否存在，现在请存在
 
 
 ### 执行代码部分
