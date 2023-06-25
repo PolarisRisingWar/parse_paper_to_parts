@@ -41,11 +41,13 @@ check_or_create_directory(image_output_folder)
 
 bio_status=0  #0前言，1摘要，2目录，3正文，4参考文献，5附录
 
+body_titles=[]  #标题列表
 
 for page_index in range(len(doc)):
     page=doc[page_index]
 
     texts=page.get_text()
+
     if page_index==0:
         title=first_page_title(texts)
         output_text_file.write("标题："+title)
@@ -64,17 +66,7 @@ for page_index in range(len(doc)):
             output_text_file.write(process_text(texts))
         elif catalog is not None:
             bio_status=2
-            items=texts.split("\n")
-            for item_index in range(len(items)):
-                item=items[item_index].strip()
-                if "绪论" in item:
-                    break
-            for item in items[item_index:]:
-                for p in re.finditer(r'\.\s*\.',item):
-                    break
-                body_title=item[:p.span()[0]].strip()
-                if len(body_title)>0 and bool(re.search(r'[\u4e00-\u9fff]+',body_title)):
-                    body_titles.append(body_title)
+            body_titles.extend(eval(from_catalog_extract_titles(texts)))
 
         else:
             output_text_file.write("\n\nAbstract\n"+process_text(texts[abstract.span()[1]:]))
@@ -84,17 +76,7 @@ for page_index in range(len(doc)):
         elif (re.search(r"插\s*图",texts) is not None) or (re.search(r"表\s*格",texts) is not None):
             bio_status=2.5
         else:
-            items=texts.split("\n")
-            for item_index in range(len(items)):
-                item=items[item_index].strip()
-                if item.endswith("1") and not item.startswith("目录"):
-                    break
-            for item in items[item_index:]:
-                for p in re.finditer(r'\.\s*\.',item):
-                    break
-                body_title=item[:p.span()[0]].strip()
-                if len(body_title)>0 and bool(re.search(r'[\u4e00-\u9fff]+',body_title)):
-                    body_titles.append(body_title)
+            body_titles.extend(eval(from_catalog_extract_titles(texts)))
     elif bio_status==2.5:
         if not re.search(body_titles[0],texts) is None:
             bio_status=3
@@ -106,7 +88,7 @@ for page_index in range(len(doc)):
         else:
             write_text_total=texts
             #提取图片
-            image_list = page.get_images(full=True)
+            image_list=page.get_images(full=True)
 
             convert_names=[]
             for image_index, img in enumerate(image_list, start=1): # enumerate the image list
@@ -118,7 +100,9 @@ for page_index in range(len(doc)):
                     if int(line[3])==int(y1):  #因为有误差所以不能精确相等
                         break
                 
-                line=texts2[line_index+2]  #TODO: 这个位置我怎么决定是1还是2？
+                line=texts2[line_index+1:line_index+5]
+                print(line)
+                exit()
                 description=line[4].strip()
                 try:
                     line_id=extract_id(description)
