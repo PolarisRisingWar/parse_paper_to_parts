@@ -16,6 +16,7 @@ import fitz,os,re,json,tabula
 
 from io_utils import *
 from pdf_utils import *
+from llm_utils import *
 
 ### 需要用户手动定义的部分
 pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/examples/example1_文字可编辑版/基于深度学习的海关虚假贸易案件罚款金额预测_胡鑫.pdf"
@@ -39,15 +40,17 @@ image_output_folder=os.path.join(output_folder,filename+"_pic")
 check_or_create_directory(image_output_folder)
 
 bio_status=0  #0前言，1摘要，2目录，3正文，4参考文献，5附录
-body_titles=[]
 
-zancun_id=set()
-zancunlujing_list=[]
-if_zancunlujing=False
+
 for page_index in range(len(doc)):
     page=doc[page_index]
 
     texts=page.get_text()
+    if page_index==0:
+        title=first_page_title(texts)
+        output_text_file.write("标题："+title)
+        continue
+
     if texts.strip()=="":
         continue
     
