@@ -14,52 +14,31 @@
 
 import fitz,os,re,json,tabula
 
+from io_utils import *
+from pdf_utils import *
+
 ### 需要用户手动定义的部分
-pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/example3/结合可视化与数据挖掘的数据分析方法探究_马昱欣.pdf"
-output_folder="whj_code1/github_code2/parse_paper_to_parts/example3/extract_result"  #下次更新检验这个文件夹是否存在，现在请存在
+pdf_file_path="whj_code1/github_code2/parse_paper_to_parts/examples/example1_文字可编辑版/基于深度学习的海关虚假贸易案件罚款金额预测_胡鑫.pdf"
+output_folder="whj_code1/github_code2/parse_paper_to_parts/examples/example1_文字可编辑版/extract_result"  #可以不存在
 
 
 ### 执行代码部分
-def process_text(text:str,body_titles:list=[],position:str="正文"):
-    """将PDF提取的文本转换为正常分段"""
-    if position=="正文":
-        text=re.sub(r'\[\d+\]', '', text)  #删除引用标
-    lines = text.split('\n')
-    paragraph_segmentations=".。:："
-        
-    for i in range(len(lines)):
-        if any([lines[i].endswith(paragraph_segmentation+" ") or lines[i].endswith(paragraph_segmentation) \
-                for paragraph_segmentation in paragraph_segmentations]):
-            lines[i]+="\n"
-        if any([lines[i].startswith(body_title) for body_title in body_titles]):
-            lines[i]="\n\n"+lines[i]+"\n"
-        if lines[i]=="!":
-            lines[i]=""
-    return ''.join(lines)
-
-def extract_id(description:str,type:str="图"):
-    """从图片描述文本中提取ID"""
-    line_id=description.split()[0]
-    if line_id==type:
-        return ' '.join(description.split()[:2])
-    else:
-        return line_id
+check_or_create_directory(output_folder)
 
 
 doc = fitz.open(pdf_file_path)
 
 #提取文字和图表
 filename_with_extension=os.path.basename(pdf_file_path)
-filename, _ = os.path.splitext(filename_with_extension)
+filename,_=os.path.splitext(filename_with_extension)
 output_text_file=open(os.path.join(output_folder,filename+"_text.txt"),"w")
 output_image={}
 output_table={}
 
 image_output_folder=os.path.join(output_folder,filename+"_pic")
-if not os.path.exists(image_output_folder):
-    os.makedirs(image_output_folder)
+check_or_create_directory(image_output_folder)
 
-bio_status=0  #0前言，1摘要，2目录，2.5不需要的目录，3正文，4参考文献，5附录
+bio_status=0  #0前言，1摘要，2目录，3正文，4参考文献，5附录
 body_titles=[]
 
 zancun_id=set()
