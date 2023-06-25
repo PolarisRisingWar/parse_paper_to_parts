@@ -50,7 +50,7 @@ for page_index in range(len(doc)):
 
     if page_index==0:
         title=first_page_title(texts)
-        output_text_file.write("标题："+title)
+        output_text_file.write("标题："+title+"\n\n")
         continue
 
     if texts.strip()=="":
@@ -100,35 +100,29 @@ for page_index in range(len(doc)):
                     if int(line[3])==int(y1):  #因为有误差所以不能精确相等
                         break
                 
-                line=texts2[line_index+1:line_index+5]
-                print(line)
-                exit()
-                description=line[4].strip()
+                if line_index<len(texts2)-5:
+                    line="\n".join([x[4] for x in texts2[line_index+1:line_index+5]])
+                else:
+                    line="\n".join([x[4] for x in texts2[line_index+1:]])+"\n"+\
+                        "\n".join([x[4] for x in doc[page_index+1].get_text("blocks",sort=True)[:5]])
                 try:
-                    line_id=extract_id(description)
-                except IndexError as e:
-                    line=texts2[line_index+3]
-                    description=line[4].strip()
-                    line_id=extract_id(description)
-                write_text_total=write_text_total.replace(description,"")
-                if not description.startswith("图"):  #子图
-                    if_zancunlujing=True
-                    for lineindex in range(line_index,len(texts2)):
-                        bigger_description=texts2[lineindex][4].strip()
-                        if bigger_description.startswith("图"):
-                            line_id=extract_id(bigger_description)+" "+line_id
-                            description=bigger_description+" "+description
-                            if len(zancunlujing_list)>0:
-                                for zancunlujing in zancunlujing_list:
-                                    dir_name, file_name = os.path.split(zancunlujing)
-                                    new_file_name=extract_id(bigger_description)+" "+file_name
-                                    new_file_path=os.path.join(dir_name,new_file_name)
-                                    os.rename(zancunlujing, new_file_path)
-                            zancunlujing_list=[]
-                            if_zancunlujing=False
-                            break
+                    id_n_description=from_image_text_extract_description_and_id(line)
+                    if not id_n_description.startswith("["):
+                        id_n_description="["+id_n_description
+                    if not id_n_description.endswith("]"):
+                        id_n_description+="]"
+                    #print("返回值：")
+                    #print(id_n_description)
+                    #print("输入值：")
+                    #print(line)
+                    image_id,description=[x.strip() for x in eval(id_n_description)][:2]
+                except (SyntaxError,ValueError) as e:
+                    description=id_n_description
+                    image_id=extract_id(description)
+                if "\n" in description:
+                    description=description.split("\n")[0]
                         
-                output_image[line_id]=line[4].strip()
+                output_image[image_id]=description
 
                 xref = img[0] # get the XREF of the image
                 pix = fitz.Pixmap(doc, xref) # create a Pixmap
@@ -136,9 +130,9 @@ for page_index in range(len(doc)):
                 if pix.n - pix.alpha > 3: # CMYK: convert to RGB first
                     pix = fitz.Pixmap(fitz.csRGB, pix)
 
-                picture_path=os.path.join(image_output_folder,line_id+".png")
-                if if_zancunlujing:
-                    zancunlujing_list.append(picture_path)
+                picture_path=os.path.join(image_output_folder,image_id+".png")
+                picture_path=deduplicate_insert_file(picture_path)
+
                 try:
                     pix.save(picture_path,output="png") # save the image as png
                 except RuntimeError as e:  #RuntimeError: pixmap must be grayscale or rgb to write as png
@@ -147,9 +141,9 @@ for page_index in range(len(doc)):
                 pix = None
             
             #提取表格
-            if len(re.findall(r'表 \d+-\d+',texts))>0:
+            if len(re.findall(r'表 \d+.\d+ ',texts))>0:
                 for sentence in texts.split("\n"):
-                    if re.match(r'表 \d+-\d+',sentence):
+                    if re.match(r'表 \d+.\d+ ',sentence):
                         description=sentence
                         write_text_total=write_text_total.replace(description,"")
                         table_id=extract_id(description,"表")
@@ -159,8 +153,8 @@ for page_index in range(len(doc)):
                     for table in tables:
                         for index, row in table.iterrows():
                             output_table[table_id]["value"].append(list(row))
-                else:
-                    pass #TODO: 说明有表格没有提取成功
+                else:  #说明表格无法直接通过tabula-py提取
+                    pass
 
             
 
