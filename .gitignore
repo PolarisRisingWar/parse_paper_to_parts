@@ -160,4 +160,4 @@ cython_debug/
 #.idea/
 
 **/try_*
-**/keys.py
+**/.env

@@ -12,27 +12,34 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import fitz, os, re, json, tabula
+import fitz, os, re, json, tabula, argparse
 
 from io_utils import *
 from pdf_utils import *
 from llm_utils import *
 
 ### 需要用户手动定义的部分
-pdf_file_path = "whj_code1/github_code2/parse_paper_to_parts/examples/example1_文字可编辑版/基于深度学习的海关虚假贸易案件罚款金额预测_胡鑫.pdf"
-output_folder = "whj_code1/github_code2/parse_paper_to_parts/examples/example1_文字可编辑版/extract_result"  # 可以不存在
+parser = argparse.ArgumentParser()
+parser.add_argument("-ip", "--input_pdf", type=str)
+parser.add_argument("-op", "--output_folder", type=str)
+
+args = parser.parse_args()
+arg_dict = args.__dict__
+pdf_file_path = arg_dict["input_pdf"]
+output_folder = arg_dict["output_folder"]
 
 
 ### 执行代码部分
 check_or_create_directory(output_folder)
-
 
 doc = fitz.open(pdf_file_path)
 
 # 提取文字和图表
 filename_with_extension = os.path.basename(pdf_file_path)
 filename, _ = os.path.splitext(filename_with_extension)
-output_text_file = open(os.path.join(output_folder, filename + "_text.txt"), "w")
+output_text_file = open(
+    os.path.join(output_folder, filename + "_text.txt"), "w", encoding="utf-8"
+)
 output_image = {}
 output_table = {}
 
@@ -51,6 +58,8 @@ for page_index in range(len(doc)):
     if page_index == 0:
         title = first_page_title(texts)
         output_text_file.write("标题：" + title + "\n\n")
+        print("论文标题提取完成")
+        output_text_file.flush()
         continue
 
     if texts.strip() == "":
@@ -67,6 +76,8 @@ for page_index in range(len(doc)):
         if abstract is None and catalog is None:
             output_text_file.write(process_text(texts))
         elif catalog is not None:
+            output_text_file.flush()
+            print("论文摘要提取完成")
             bio_status = 2
             body_titles.extend(eval(from_catalog_extract_titles(texts)))
 
@@ -83,12 +94,20 @@ for page_index in range(len(doc)):
             bio_status = 2.5
         else:
             body_titles.extend(eval(from_catalog_extract_titles(texts)))
+        
+        if bio_status>2:
+            print("论文目录提取完成")
+            output_text_file.write("目录：\n"+"\n".join(body_titles)+"\n\n")
+            output_text_file.flush()
+
     elif bio_status == 2.5:
         if not re.search(body_titles[0], texts) is None:
             bio_status = 3
 
     if bio_status == 3:
         if "参考文献 " in texts.split("\n"):
+            output_text_file.flush()
+            print("正文提取完成")
             bio_status = 4
             output_text_file.write("\n\n")
         else:
@@ -105,7 +124,7 @@ for page_index in range(len(doc)):
 
                 for line_index in range(len(texts2)):
                     line = texts2[line_index]
-                    if int(line[3]) == int(y1):  # 因为有误差所以不能精确相等
+                    if line[3] > y1:  # 图的标题在图的下面
                         break
 
                 if line_index < len(texts2) - 5:
@@ -127,14 +146,12 @@ for page_index in range(len(doc)):
                     )
                 try:
                     id_n_description = from_image_text_extract_description_and_id(line)
+                    id_n_description.strip("'")
+                    id_n_description.strip('"')
                     if not id_n_description.startswith("["):
                         id_n_description = "[" + id_n_description
                     if not id_n_description.endswith("]"):
                         id_n_description += "]"
-                    # print("返回值：")
-                    # print(id_n_description)
-                    # print("输入值：")
-                    # print(line)
                     image_id, description = [x.strip() for x in eval(id_n_description)][
                         :2
                     ]
@@ -165,9 +182,9 @@ for page_index in range(len(doc)):
                 pix = None
 
             # 提取表格
-            if len(re.findall(r"表 \d+.\d+ ", texts)) > 0:
+            if len(re.findall(r"表\s*\d+[\.\-]\s*\d+\s+.*", texts)) > 0:
                 for sentence in texts.split("\n"):
-                    if re.match(r"表 \d+.\d+ ", sentence):
+                    if re.match(r"表\s*\d+[\.\-]\s*\d+\s+.*", sentence):
                         description = sentence
                         write_text_total = write_text_total.replace(description, "")
                         table_id = extract_id(description, "表")
@@ -176,7 +193,7 @@ for page_index in range(len(doc)):
                             "value": [],
                         }
                 tables = tabula.read_pdf(
-                    pdf_file_path, pages=page_index, multiple_tables=True
+                    pdf_file_path, pages=page_index+1, multiple_tables=True
                 )
                 if len(tables) > 0:
                     for table in tables:
@@ -193,16 +210,18 @@ for page_index in range(len(doc)):
                 "\n".join(texts.split("\n")[3:-1]), body_titles, position="参考文献"
             )
         )
+print("论文全部信息提取完成")
+output_text_file.close()
 
 json.dump(
     output_image,
-    open(os.path.join(output_folder, filename + "_pic.json"), "w"),
+    open(os.path.join(output_folder, filename + "_pic.json"), "w", encoding="utf-8"),
     ensure_ascii=False,
+    indent=4,
 )
 json.dump(
     output_table,
-    open(os.path.join(output_folder, filename + "_table.json"), "w"),
+    open(os.path.join(output_folder, filename + "_table.json"), "w", encoding="utf-8"),
     ensure_ascii=False,
+    indent=4,
 )
-
-output_text_file.close()

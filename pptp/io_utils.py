@@ -17,7 +17,7 @@ import os, re
 
 def check_or_create_directory(directory: str):
     """检查文件夹是否存在，如不存在将自动创建"""
-    assert not os.path.isfile(directory)  # 路径不能是文件夹
+    assert not os.path.isfile(directory)  # 路径不能是文件
     if not os.path.exists(directory):
         os.makedirs(directory)
 
