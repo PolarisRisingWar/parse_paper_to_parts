@@ -46,10 +46,11 @@ v-0.0.4:
 	6. https://github.com/run-llama/llama_parse  
 	https://docs.llamaindex.ai/en/stable/llama_cloud/llama_parse/
 	4. 其实我也有考虑自己train一个模型
+	8. 多模态LLM，比如：[openbmb/MiniCPM-Llama3-V-2_5 · Hugging Face](https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5)
 
 测试效果见examples文件夹：
 - example1：2024.5.23 13:59-14:02
-- example2: 2024.5.23 13:45-13:49
+- example2：2024.5.23 13:45-13:49
 
 参考资料：
 1. <https://github.com/Alihassan7212/PDF-extraction-and-dissection/blob/main/project.py>
