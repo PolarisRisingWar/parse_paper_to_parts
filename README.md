@@ -41,6 +41,10 @@ v-0.0.4:
 	Doc2X识别整个框架的技术都很牛逼，但是又还是有一点不足。整体上就想抄代码……
 	2. Aspose和mathpix的API
 	3. ScanSSD <https://ws-dl.blogspot.com/2020/06/2020-06-05-math-formula-extraction-from.html> 提取公式
+	4. https://github.com/facebookresearch/nougat
+	5. https://github.com/opengovsg/pdf2md
+	6. https://github.com/run-llama/llama_parse  
+	https://docs.llamaindex.ai/en/stable/llama_cloud/llama_parse/
 	4. 其实我也有考虑自己train一个模型
 
 测试效果见examples文件夹：
