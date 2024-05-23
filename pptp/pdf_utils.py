@@ -42,9 +42,15 @@ def process_text(text: str, body_titles: list = [], position: str = "正文"):
 
 
 def extract_id(description: str, type: str = "图"):
-    """从图片描述文本中提取ID，如图1-1等"""
+    """从图表描述文本中提取ID，如图1-1等"""
     line_id = description.split()[0]
     if line_id == type:
         return " ".join(description.split()[:2])
     else:
         return line_id
+
+def zhengwen_open_page(introduction_title,block_text):
+    if introduction_title.split()[1] in block_text[0][4]:
+        return True
+    else:
+        return False

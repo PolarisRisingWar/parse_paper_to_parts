@@ -1,10 +1,10 @@
 {
     "表3-1": {
-        "description": "表3-1 主要符号对照表 ",
+        "description": "表3-1 主要符号对照表 \n",
         "value": []
     },
     "表3-2": {
-        "description": "表3-2 文本标准化统一代词表 ",
+        "description": "表3-2 文本标准化统一代词表 \n",
         "value": [
             [
                 "时间数字",
@@ -34,7 +34,7 @@
         ]
     },
     "表4-1": {
-        "description": "表4-1 海关虚假贸易案件数据集的数据格式 ",
+        "description": "表4-1 海关虚假贸易案件数据集的数据格式 \n",
         "value": [
             [
                 1.0,
@@ -114,15 +114,15 @@
         ]
     },
     "表4-2": {
-        "description": "表4-2 各数据集信息统计 ",
+        "description": "表4-2 各数据集信息统计 \n",
         "value": []
     },
     "表4-3": {
-        "description": "表4-3 数字离散化区间说明 ",
+        "description": "表4-3 数字离散化区间说明 \n",
         "value": []
     },
     "表4-4": {
-        "description": "表4-4 实验硬件配置与软件环境 ",
+        "description": "表4-4 实验硬件配置与软件环境 \n",
         "value": [
             [
                 "CPU",
@@ -155,7 +155,7 @@
         ]
     },
     "表4-5": {
-        "description": "表4-5 罚款金额预测实验结果 ",
+        "description": "表4-5 罚款金额预测实验结果 \n",
         "value": [
             [
                 "Word2Vec+ CNN",
@@ -196,7 +196,7 @@
         ]
     },
     "表4-6": {
-        "description": "表4-6 模型部件验证实验结果 ",
+        "description": "表4-6 模型部件验证实验结果 \n",
         "value": [
             [
                 "CNN",
@@ -225,7 +225,7 @@
         ]
     },
     "表4-7": {
-        "description": "表4-7 Transformer-XL 的参数组合对罚款金额预测任务的影响 ",
+        "description": "表4-7 Transformer-XL 的参数组合对罚款金额预测任务的影响 \n",
         "value": [
             [
                 "(4,512,5)",

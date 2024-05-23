@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import fitz, os, re, json, tabula, argparse
+import fitz, os, re, json, tabula, argparse, pymupdf
 
 from io_utils import *
 from pdf_utils import *
@@ -54,8 +54,9 @@ for page_index in range(len(doc)):
     page = doc[page_index]
 
     texts = page.get_text()
+    texts2 = page.get_text("blocks", sort=True)
 
-    if page_index == 0:
+    if page_index == 0:  # 从封面提取标题
         title = first_page_title(texts)
         output_text_file.write("标题：" + title + "\n\n")
         print("论文标题提取完成")
@@ -65,28 +66,28 @@ for page_index in range(len(doc)):
     if texts.strip() == "":
         continue
 
-    if bio_status == 0 and not re.search(r"摘\s*要", texts) is None:
+    if bio_status == 0 and not re.search(r"摘\s*要", texts) is None:  # 开始识别摘要
         output_text_file.write(
             "摘要\n" + process_text(texts[re.search(r"摘\s*要", texts).span()[1] :])
         )
         bio_status = 1
-    elif bio_status == 1:
+    elif bio_status == 1:  # 摘要到目录
         abstract = re.search("Abstract", texts)
         catalog = re.search(r"目\s*录", texts)
-        if abstract is None and catalog is None:
+        if abstract is None and catalog is None:  # 继续摘要
             output_text_file.write(process_text(texts))
-        elif catalog is not None:
+        elif catalog is not None:  # 提取到目录
             output_text_file.flush()
             print("论文摘要提取完成")
             bio_status = 2
             body_titles.extend(eval(from_catalog_extract_titles(texts)))
 
-        else:
+        else:  # 开始识别英文摘要
             output_text_file.write(
                 "\n\nAbstract\n" + process_text(texts[abstract.span()[1] :])
             )
-    elif bio_status == 2:
-        if not re.search(body_titles[0], texts) is None:
+    elif bio_status == 2:  # 目录
+        if zhengwen_open_page(body_titles[0], texts2):
             bio_status = 3
         elif (re.search(r"插\s*图", texts) is not None) or (
             re.search(r"表\s*格", texts) is not None
@@ -94,14 +95,14 @@ for page_index in range(len(doc)):
             bio_status = 2.5
         else:
             body_titles.extend(eval(from_catalog_extract_titles(texts)))
-        
-        if bio_status>2:
+
+        if bio_status > 2:
             print("论文目录提取完成")
-            output_text_file.write("目录：\n"+"\n".join(body_titles)+"\n\n")
+            output_text_file.write("\n\n目录：\n" + "\n".join(body_titles) + "\n\n")
             output_text_file.flush()
 
     elif bio_status == 2.5:
-        if not re.search(body_titles[0], texts) is None:
+        if zhengwen_open_page(body_titles[0], texts2):
             bio_status = 3
 
     if bio_status == 3:
@@ -120,7 +121,6 @@ for page_index in range(len(doc)):
                 image_list, start=1
             ):  # enumerate the image list
                 y1 = page.get_image_bbox(img)[3]  # 下沿位置
-                texts2 = page.get_text("blocks", sort=True)
 
                 for line_index in range(len(texts2)):
                     line = texts2[line_index]
@@ -129,15 +129,15 @@ for page_index in range(len(doc)):
 
                 if line_index < len(texts2) - 5:
                     line = "\n".join(
-                        [x[4] for x in texts2[line_index + 1 : line_index + 5]]
+                        [x[4].replace("\n"," ").strip() for x in texts2[line_index : line_index + 5]]
                     )
                 else:
                     line = (
-                        "\n".join([x[4] for x in texts2[line_index + 1 :]])
+                        "\n".join([x[4].replace("\n"," ").strip() for x in texts2[line_index:]])
                         + "\n"
                         + "\n".join(
                             [
-                                x[4]
+                                x[4].replace("\n"," ").strip()
                                 for x in doc[page_index + 1].get_text(
                                     "blocks", sort=True
                                 )[:5]
@@ -175,25 +175,28 @@ for page_index in range(len(doc)):
                 try:
                     pix.save(picture_path, output="png")  # save the image as png
                 except (
-                    RuntimeError
-                ) as e:  # RuntimeError: pixmap must be grayscale or rgb to write as png
+                    pymupdf.mupdf.FzErrorArgument,
+                    RuntimeError,
+                ) as e:
+                    # 之前的版本报的是RuntimeError: pixmap must be grayscale or rgb to write as png
+                    # 现在的版本报的是pymupdf.mupdf.FzErrorArgument: code=4: pixmap must be grayscale or rgb to write as png
                     newpix = fitz.Pixmap(fitz.csRGB, pix)
                     newpix.save(picture_path, output="png")
                 pix = None
 
             # 提取表格
             if len(re.findall(r"表\s*\d+[\.\-]\s*\d+\s+.*", texts)) > 0:
-                for sentence in texts.split("\n"):
-                    if re.match(r"表\s*\d+[\.\-]\s*\d+\s+.*", sentence):
-                        description = sentence
+                for sentence in texts2:
+                    if re.match(r"表\s*\d+[\.\-]\s*\d+\s+.*", sentence[4]):
+                        description = sentence[4]
                         write_text_total = write_text_total.replace(description, "")
-                        table_id = extract_id(description, "表")
+                        table_id = extract_id(description, "表").strip()
                         output_table[table_id] = {
                             "description": description,
                             "value": [],
                         }
                 tables = tabula.read_pdf(
-                    pdf_file_path, pages=page_index+1, multiple_tables=True
+                    pdf_file_path, pages=page_index + 1, multiple_tables=True
                 )
                 if len(tables) > 0:
                     for table in tables:

@@ -19,6 +19,58 @@ Because of the above analysis, this thesis proposes a deep learning-based model 
 Finally, this thesis uses the CNN model as the Decoder to process high-dimensional vector representations, to achieve the final fine amount prediction.  (3) Multiple comparison experiments based on real customs trade data show that the model proposed in this thesis can effectively improve the RMSE, MAPE,  and consistency rate indicators of the fine amount prediction task on the real data set.  The work of this thesis has effectively improved the accuracy in customs false trade cases in the customs judicial field, which can be regarded as a novel idea and method for handling   III fines in customs false trade cases, also a new exploration of deep learning applied in the customs justice. 
  Keywords: Deep Learning; Penalty Amount Prediction Model; Text Vector; The Quick-thoughts Model; Attentional Mechanism 
 
+目录：
+第一章 绪论
+1.1 研究背景及意义
+1.2 研究现状及分析
+1.2.1 海关虚假贸易案件执法研究现状
+1.2.2 自然语言处理领域研究现状
+1.3 论文研究内容
+1.4 论文组织结构
+第二章 相关理论和技术
+2.1 句向量技术
+2.2 深度学习模型介绍
+2.2.1 快速思维向量模型
+2.2.2 Transformer-XL 模型
+2.2.3 卷积神经网络
+2.2.4 双向长短期记忆网络
+2.2.5 注意力机制
+2.3 本章小结
+第三章 海关虚假贸易罚款金额预测模型研究
+3.1 符号定义与问题描述
+3.1.1 符号定义
+3.1.2 问题描述
+3.2 整体模型概述
+3.3 句向量编码模块
+3.3.1 文本预处理
+3.3.2 句向量编码
+3.4 罚款金额预测模块
+3.4.1 Bi-LSTM Encoder
+3.4.2 注意力机制
+3.4.3 CNN Decoder
+第四章 实验设计与结果分析
+4.1 实验数据集
+4.1.1 数据描述
+4.1.2 数据分析
+4.2 实验数据预处理
+4.2.1 预测值变化
+4.2.2 数字离散化
+4.3 实验设置
+4.4 实验评估指标
+4.5 实验结果分析
+4.5.1 性能对比实验
+4.5.2 模型部件验证
+4.5.3 超参数敏感实验
+4.5 本章小结
+总结与展望
+本文工作总结
+未来工作展望
+参考文献
+攻读硕士学位期间取得的研究成果
+致 谢
+
+
+
 第一章 绪论 
  1 
 
