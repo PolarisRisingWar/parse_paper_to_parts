@@ -49,8 +49,15 @@ def extract_id(description: str, type: str = "图"):
     else:
         return line_id
 
-def zhengwen_open_page(introduction_title,block_text):
+
+def zhengwen_open_page(introduction_title, block_text):
     if introduction_title.split()[1] in block_text[0][4]:
         return True
     else:
         return False
+
+
+def extract_formula2latex(pdf_path: str):
+    # TODO
+    # API文档：https://noedgeai.feishu.cn/wiki/Qb1SwLBi5iz6cDkVyICcVBYgnRd
+    pass

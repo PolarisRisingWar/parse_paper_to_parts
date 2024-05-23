@@ -36,8 +36,12 @@ v-0.0.4:
 1. 仅实现部分可编辑的中文毕业论文解析
 2. 使用ChatGPT获取标题、图片描述的功能；解决了子图无法处理的问题
 2. 缺点：①子图暂时只能处理子图上下分布的情况，左右分布的暂时无法处理；还没有处理子图命名问题 ②暂时仅考虑文本可编辑的情况，且仅在一篇论文上测试实现。不可编辑的PDF（扫描件）应该必须要用OCR实现了 ③有一些公式和表格无法通过PyMuPDF或者tabula-py提取，我猜应该还是需要用目标检测方法实现提取（我用的PyMuPDF无法解析特殊字符，包括①②这种。有一些格式的论文PDF的公式可以解析为文本，但是只能复制而不是直接以LaTeX公式形式呈现所以……）  ④关于页眉页脚和页码的去除，应该需要针对每篇PDF计算其正文的box位置范围 ⑤使用AI的部分可能会出现无法预知的错误（有些可以预知的已经在处理了，不可预知的等我以后自己train个模型吧，理论上更专业的模型会更稳定些） ⑤有一些换行的捕获有问题，这是因为pymupdf无法捕获段前空格，我下次用block位置来解析这点，现在这版大家先凑合用吧。⑥ tabula会报Invalid ToUnicode CMap in font和Using predefined identity CMap instead错误。我懒得处理了以后再说吧
-2. 下个版本的更新计划：实现OCR（我实验室安装好tesseract的服务器炸了）；试用ScanSSD <https://ws-dl.blogspot.com/2020/06/2020-06-05-math-formula-extraction-from.html> 提取公式  
-呼吁大家捐款给我买Aspose和mathpix的API，再捐点我去买个medium会员看一下这篇博文：<https://towardsdatascience.com/extracting-text-from-scanned-pdf-using-pytesseract-open-cv-cd670ee38052>（也可以直接等我到下个月看哈）
+2. 下个版本的更新计划：实现OCR（我实验室安装好tesseract的服务器炸了）；试用提取公式功能
+	1. Doc2X的免费API（我试了一下感觉十分牛逼，准备尝试把一堆公式放在一张PDF里一起试）因为免费版一个人一天只有500页的额度，要是全塞进去，这不是没几篇毕业论文就霍霍没了吗？  
+	Doc2X识别整个框架的技术都很牛逼，但是又还是有一点不足。整体上就想抄代码……
+	2. Aspose和mathpix的API
+	3. ScanSSD <https://ws-dl.blogspot.com/2020/06/2020-06-05-math-formula-extraction-from.html> 提取公式
+	4. 其实我也有考虑自己train一个模型
 
 测试效果见examples文件夹：
 - example1：2024.5.23 13:59-14:02
